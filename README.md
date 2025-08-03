@@ -144,7 +144,6 @@ SELECT * FROM subscription_history WHERE user_id = :user_id AND status = 'active
 - **레이블**: 긍정 / 부정 / 중립
 
 ---
-
 ## 7. 🧪 테스트 계획
 
 ### 7.1 Intent 분류 테스트
