@@ -84,13 +84,29 @@
 
 ### 4.2 Intent 분류 항목 예시
 
-| intent | 예시 질문                            |
-| ------ | ------------------------------------ |
-| 조회   | "내 구독 목록 알려줘"                |
-| 비교   | "넷플릭스랑 디즈니플러스 뭐가 달라?" |
-| 추천   | "가성비 좋은 OTT 뭐 있어?"           |
-| 해지   | "유튜브 프리미엄 해지하고 싶어요"    |
-| 고민   | "계속 써야 할지 고민이에요"          |
+| intent | 예시 질문                 |
+| ------ | --------------------- |
+| 조회     | "내 구독 목록 알려줘"         |
+| 비교     | "넷플릭스랑 디즈니플러스 뭐가 달라?" |
+| 추천     | "가성비 좋은 OTT 뭐 있어?"    |
+| 해지     | "유튜브 프리미엄 해지하고 싶어요"   |
+| 고민     | "계속 써야 할지 고민이에요"      |
+
+### 4.3 파인튜닝 계획
+
+- **대상 모델**: `KoBERT`, `KoMiniLM`, `klue/bert-base`
+- **목표 과업**:
+  - Intent 분류 정확도 향상
+  - 감성분석 정밀도 개선
+- **데이터 구성**:
+  - 수집한 사용자 질문 및 응답 500건 이상 라벨링
+  - 후기 데이터 감성 레이블 수작업 추가
+- **진행 방식**:
+  - `transformers.Trainer` 또는 `PyTorch Lightning` 사용
+  - 학습/검증/테스트셋 분리 및 early stopping 적용
+- **산출물**:
+  - fine-tuned model checkpoint (`.bin`, `.pt`)
+  - ONNX 모델 변환 (배포 최적화용)
 
 ---
 
@@ -142,6 +158,7 @@ SELECT * FROM subscription_history WHERE user_id = :user_id AND status = 'active
 
 - **모델**: `klue/bert-base`
 - **레이블**: 긍정 / 부정 / 중립
+- **파인튜닝**: 수집한 후기 데이터 기반으로 감성 fine-tuning 적용 (수작업 레이블 포함)
 
 ---
 
@@ -163,21 +180,21 @@ SELECT * FROM subscription_history WHERE user_id = :user_id AND status = 'active
 
 ## 8. 📆 일정안 (예시)
 
-| 기간         | 주요 작업 내용                         |
-| ------------ | -------------------------------------- |
-| 8/5 \~ 8/9   | 크롤링 및 메타데이터 수집기 구성       |
-| 8/12 \~ 8/16 | intent 분류기 v1 학습 + 시나리오 정의  |
-| 8/19 \~ 8/23 | rule 기반 응답 로직 구현               |
-| 8/26 \~ 9/6  | LLM 연동 + context embedding 응답 설계 |
-| 9/9 \~ 9/13  | 테스트셋 구성 + 평가                   |
-| 9/16         | PoC 완료 및 보고서 작성                |
+| 기간           | 주요 작업 내용                                         |
+| ------------ | ------------------------------------------------ |
+| 8/5 \~ 8/9   | 크롤링 및 메타데이터 수집기 구성                               |
+| 8/12 \~ 8/16 | intent 분류기 v1 학습 + 시나리오 정의                       |
+| 8/19 \~ 8/23 | 파인튜닝 모델 학습 및 성능 테스트                              |
+| 8/26 \~ 9/6  | Rule 응답 로직 구현 + LLM 연동 및 context embedding 응답 설계 |
+| 9/9 \~ 9/13  | 전체 테스트셋 구성 + 정확도 평가                              |
+| 9/16         | PoC 완료 및 보고서 작성                                  |
 
 ---
 
 ## 9. 🧱 기술 스택
 
 - **언어**: Python, SQL, Shell
-- **라이브러리**: Transformers, scikit-learn, spaCy, scrapy
+- **라이브러리**: Transformers, scikit-learn, spaCy, scrapy, PyTorch
 - **서버/인프라**: AWS Lambda, S3, CloudWatch, ECS
 - **DB**: PostgreSQL
 - **LLM 연동**: Huggingface, Ollama (또는 OpenAI API)
@@ -187,8 +204,9 @@ SELECT * FROM subscription_history WHERE user_id = :user_id AND status = 'active
 ## 10. ✅ 구현 우선순위 (PoC)
 
 1. 사용자 질문 intent 분류기 구축 및 시나리오 정의
-2. Rule 기반 응답 모듈 개발
-3. 후기 크롤링기 + 감성/요약 분석기
-4. LLM 연동 fallback 응답
-5. 사용자 context 반영 응답 생성
+2. Fine-tuning 모델 학습 및 배포
+3. Rule 기반 응답 모듈 개발
+4. 후기 크롤링기 + 감성/요약 분석기
+5. LLM 연동 fallback 응답
+6. 사용자 context 반영 응답 생성
 
