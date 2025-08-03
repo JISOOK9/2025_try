@@ -3,3 +3,6 @@ beautifulsoup4
 scikit-learn
 vaderSentiment
 pytest
+torch
+transformers
+accelerate
