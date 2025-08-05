@@ -3,9 +3,29 @@ from __future__ import annotations
 
 from typing import Callable, Dict, Optional
 
+from .db import fetch_user_subscriptions
+
+
+def _subscriptions_from_db(ctx: dict) -> list:
+    """Fetch subscriptions for the user and store them in ``ctx``.
+
+    If ``subscriptions`` already exist in ``ctx`` they are returned as-is.
+    When ``user_id`` is missing no database call is performed.
+    """
+
+    if "subscriptions" in ctx:
+        return ctx["subscriptions"]
+    user_id = ctx.get("user_id")
+    if user_id is None:
+        return []
+    subs = fetch_user_subscriptions(user_id)
+    ctx["subscriptions"] = subs
+    return subs
+
+
 RULES: Dict[str, Callable[[dict], str]] = {
     "조회": lambda ctx: "현재 구독 중인 상품은 {}입니다.".format(
-        ", ".join(ctx.get("subscriptions", []) or ["없음"])
+        ", ".join(_subscriptions_from_db(ctx) or ["없음"])
     ),
     "비교": lambda ctx: "비교 결과: 각 서비스마다 장단점이 있어요.",
     "추천": lambda ctx: "사용자님께는 {}를 추천합니다.".format(
