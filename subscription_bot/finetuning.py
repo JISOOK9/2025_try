@@ -7,6 +7,7 @@ run quickly without heavy downloads.
 from __future__ import annotations
 
 from dataclasses import dataclass
+from pathlib import Path
 from typing import Dict, List, Tuple
 
 import torch
@@ -51,10 +52,42 @@ class IntentDataset(Dataset):
         return enc
 
 
+def export_to_onnx(model: torch.nn.Module, output_path: str) -> None:
+    """Export ``model`` to ONNX format.
+
+    Parameters
+    ----------
+    model:
+        The trained model to export.
+    output_path:
+        File path where the ONNX model will be stored.
+    """
+
+    model.eval()
+    dummy = {
+        "input_ids": torch.ones((1, 32), dtype=torch.long),
+        "attention_mask": torch.ones((1, 32), dtype=torch.long),
+    }
+    torch.onnx.export(
+        model,
+        (dummy["input_ids"], dummy["attention_mask"]),
+        output_path,
+        input_names=["input_ids", "attention_mask"],
+        output_names=["logits"],
+        dynamic_axes={
+            "input_ids": {0: "batch"},
+            "attention_mask": {0: "batch"},
+            "logits": {0: "batch"},
+        },
+        opset_version=13,
+    )
+
+
 def fine_tune_intent_model(
     examples: List[IntentExample],
     model_name: str = "hf-internal-testing/tiny-random-bert",
     output_dir: str = "./intent_model",
+    export_onnx: bool = False,
 ) -> Tuple[AutoModelForSequenceClassification, AutoTokenizer]:
     """Fine-tune ``model_name`` on ``examples`` for intent classification.
 
@@ -66,6 +99,8 @@ def fine_tune_intent_model(
         Pretrained model identifier on Hugging Face Hub.
     output_dir:
         Directory used by the Trainer for checkpoints.
+    export_onnx:
+        If ``True``, export the fine-tuned model to ONNX after training.
 
     Returns
     -------
@@ -96,5 +131,9 @@ def fine_tune_intent_model(
     )
     trainer = Trainer(model=model, args=args, train_dataset=dataset)
     trainer.train()
+
+    if export_onnx:
+        onnx_path = Path(output_dir) / "model.onnx"
+        export_to_onnx(model, str(onnx_path))
 
     return model, tokenizer
