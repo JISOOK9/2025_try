@@ -6,3 +6,6 @@ pytest
 torch
 transformers
 accelerate
+
+spacy
+https://github.com/explosion/spacy-models/releases/download/ko_core_news_sm-3.7.0/ko_core_news_sm-3.7.0.tar.gz
