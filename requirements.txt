@@ -6,3 +6,5 @@ pytest
 torch
 transformers
 accelerate
+fastapi
+httpx
